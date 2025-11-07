@@ -16,22 +16,48 @@ URIs for YOLO files:
 import os
 import sys
 import urllib.request
+import urllib.error
+import hashlib
 from pathlib import Path
 
 
 # Define URIs for YOLO files
+# Note: Using GitHub mirror for weights as the official pjreddie.com may be inaccessible
 YOLO_FILES = {
-    "yolov3.cfg": "https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3.cfg",
-    "yolov3.weights": "https://github.com/patrick013/Object-Detection---Yolov3/raw/master/model/yolov3.weights",
-    "coco.names": "https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names"
+    "yolov3.cfg": {
+        "url": "https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3.cfg",
+        "sha256": None  # Optional: add hash for verification
+    },
+    "yolov3.weights": {
+        "url": "https://github.com/patrick013/Object-Detection---Yolov3/raw/master/model/yolov3.weights",
+        "sha256": None  # Optional: add hash for verification
+    },
+    "coco.names": {
+        "url": "https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names",
+        "sha256": None  # Optional: add hash for verification
+    }
 }
 
 # Directory where YOLO files will be stored
 YOLO_DIR = Path("data/yolo")
 
 
-def download_file(url, destination):
-    """Download a file from URL to destination path with progress indication."""
+def verify_file_hash(file_path, expected_hash):
+    """Verify the SHA256 hash of a downloaded file."""
+    if expected_hash is None:
+        return True  # Skip verification if no hash is provided
+    
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    
+    calculated_hash = sha256_hash.hexdigest()
+    return calculated_hash == expected_hash
+
+
+def download_file(url, destination, expected_hash=None, timeout=300):
+    """Download a file from URL to destination path with progress indication and verification."""
     print(f"Downloading {destination.name} from {url}...")
     
     try:
@@ -43,11 +69,40 @@ def download_file(url, destination):
                 sys.stdout.write(f"\rProgress: {percent:.1f}% ({downloaded}/{total_size} bytes)")
                 sys.stdout.flush()
         
-        urllib.request.urlretrieve(url, destination, reporthook=report_progress)
-        print(f"\n✓ Successfully downloaded {destination.name}")
+        # Create an SSL context with certificate verification
+        import ssl
+        context = ssl.create_default_context()
+        
+        # Download with timeout
+        opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=context))
+        urllib.request.install_opener(opener)
+        
+        urllib.request.urlretrieve(url, destination, reporthook=report_progress, data=None)
+        print()  # New line after progress
+        
+        # Verify hash if provided
+        if expected_hash:
+            print(f"Verifying {destination.name}...")
+            if verify_file_hash(destination, expected_hash):
+                print(f"✓ Hash verification passed")
+            else:
+                print(f"✗ Hash verification failed for {destination.name}")
+                destination.unlink()  # Delete the file
+                return False
+        
+        print(f"✓ Successfully downloaded {destination.name}")
         return True
+    except urllib.error.HTTPError as e:
+        print(f"\n✗ HTTP error downloading {destination.name}: {e.code} {e.reason}")
+        return False
+    except urllib.error.URLError as e:
+        print(f"\n✗ URL error downloading {destination.name}: {e.reason}")
+        return False
+    except OSError as e:
+        print(f"\n✗ OS error downloading {destination.name}: {e}")
+        return False
     except Exception as e:
-        print(f"\n✗ Error downloading {destination.name}: {e}")
+        print(f"\n✗ Unexpected error downloading {destination.name}: {e}")
         return False
 
 
@@ -67,8 +122,10 @@ def main():
     total_files = len(YOLO_FILES)
     
     # Download each file
-    for filename, url in YOLO_FILES.items():
+    for filename, file_info in YOLO_FILES.items():
         destination = YOLO_DIR / filename
+        url = file_info["url"]
+        expected_hash = file_info.get("sha256")
         
         # Skip if file already exists
         if destination.exists():
@@ -77,7 +134,7 @@ def main():
             continue
         
         # Download the file
-        if download_file(url, destination):
+        if download_file(url, destination, expected_hash):
             success_count += 1
         print()
     
