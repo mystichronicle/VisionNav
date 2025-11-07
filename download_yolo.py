@@ -56,7 +56,7 @@ def verify_file_hash(file_path, expected_hash):
     return calculated_hash == expected_hash
 
 
-def download_file(url, destination, expected_hash=None, timeout=300):
+def download_file(url, destination, expected_hash=None):
     """Download a file from URL to destination path with progress indication and verification."""
     print(f"Downloading {destination.name} from {url}...")
     
@@ -77,7 +77,7 @@ def download_file(url, destination, expected_hash=None, timeout=300):
         opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=context))
         urllib.request.install_opener(opener)
         
-        urllib.request.urlretrieve(url, destination, reporthook=report_progress, data=None)
+        urllib.request.urlretrieve(url, destination, reporthook=report_progress)
         print()  # New line after progress
         
         # Verify hash if provided
