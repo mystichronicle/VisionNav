@@ -14,9 +14,11 @@ URIs for YOLO files:
 """
 
 import sys
+import ssl
 import urllib.request
 import urllib.error
 import hashlib
+import argparse
 from pathlib import Path
 
 
@@ -25,15 +27,15 @@ from pathlib import Path
 YOLO_FILES = {
     "yolov3.cfg": {
         "url": "https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3.cfg",
-        "sha256": "c84e5b99d0e52cd466ae710cadf6d84c7d2d7d5c6d0e31e751b4d34b6dd6c5de"  # SHA256 for yolov3.cfg
+        "sha256": "22489ea38575dfa36c67a90048e8759576416a79d32dc11e15d2217777b9a953"
     },
     "yolov3.weights": {
         "url": "https://github.com/patrick013/Object-Detection---Yolov3/raw/master/model/yolov3.weights",
-        "sha256": "c84e5b99d0e52cd466ae710cadf6d84c7d2d7d5c6d0e31e751b4d34b6dd6c5de"  # SHA256 for yolov3.weights
+        "sha256": "523e4e69e1d015393a1b0a441cef1d9c7659e3eb2d7e15f793f060a21b32f297"
     },
     "coco.names": {
         "url": "https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names",
-        "sha256": "8d6e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e"  # SHA256 for coco.names
+        "sha256": "634a1132eb33f8091d60f2c346ababe8b905ae08387037aed883953b7329af84"
     }
 }
 
@@ -70,12 +72,8 @@ def download_file(url, destination, expected_hash=None):
             else:
                 sys.stdout.write(f"\rDownloaded: {downloaded} bytes")
                 sys.stdout.flush()
-            else:
-                sys.stdout.write(f"\rDownloaded: {downloaded} bytes")
-                sys.stdout.flush()
         
         # Create an SSL context with certificate verification
-        import ssl
         context = ssl.create_default_context()
         
         # Download with timeout
@@ -126,6 +124,12 @@ def download_file(url, destination, expected_hash=None):
 
 def main():
     """Main function to download all YOLO files."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Download YOLO configuration and weights files.')
+    parser.add_argument('--force', action='store_true', 
+                       help='Force re-download even if files already exist')
+    args = parser.parse_args()
+    
     print("=" * 60)
     print("YOLO Configuration and Weights Downloader")
     print("=" * 60)
@@ -145,11 +149,25 @@ def main():
         url = file_info["url"]
         expected_hash = file_info.get("sha256")
         
-        # Skip if file already exists
-        if destination.exists():
-            print(f"✓ {filename} already exists, skipping...")
-            success_count += 1
-            continue
+        # Check if file already exists
+        if destination.exists() and not args.force:
+            # Verify existing file if hash is provided
+            if expected_hash:
+                print(f"Verifying existing {filename}...")
+                if verify_file_hash(destination, expected_hash):
+                    print(f"✓ {filename} already exists and is valid, skipping...")
+                    success_count += 1
+                    continue
+                else:
+                    print(f"⚠ {filename} exists but hash verification failed, re-downloading...")
+                    destination.unlink()
+            else:
+                print(f"✓ {filename} already exists, skipping...")
+                success_count += 1
+                continue
+        elif destination.exists() and args.force:
+            print(f"⚠ {filename} exists but --force flag set, re-downloading...")
+            destination.unlink()
         
         # Download the file
         if download_file(url, destination, expected_hash):
