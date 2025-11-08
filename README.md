@@ -38,24 +38,26 @@ VisionNav is a cutting-edge navigation system designed for visually impaired ind
     cd VisionNav
     ```
 
-2. **Install the required dependencies:**
+2. **Install the required dependencies and download YOLO files:**
+
+    The setup script will install dependencies and automatically download YOLO configuration and weights:
 
     ```bash
     ./setup.sh
     ```
 
-3. **Download YOLO configuration and weights:**
+    Alternatively, you can download YOLO files manually:
 
     ```bash
-    mkdir -p data/yolo
-    cd data/yolo
-    curl -O https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3.cfg
-    curl -O https://pjreddie.com/media/files/yolov3.weights
-    curl -O https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names
-    cd ../../
+    python3 download_yolo.py
     ```
 
-4. **Collect Bluetooth beacon data (if applicable):**
+    The download script uses the following URIs:
+    - Config: `https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3.cfg`
+    - Weights: `https://github.com/patrick013/Object-Detection---Yolov3/raw/master/model/yolov3.weights`
+    - Names: `https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names`
+
+3. **Collect Bluetooth beacon data (if applicable):**
 
     ```bash
     python collect_beacon_data.py
