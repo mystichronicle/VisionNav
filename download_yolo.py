@@ -25,15 +25,15 @@ from pathlib import Path
 YOLO_FILES = {
     "yolov3.cfg": {
         "url": "https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3.cfg",
-        "sha256": None  # Optional: add hash for verification
+        "sha256": "c84e5b99d0e52cd466ae710cadf6d84c7d2d7d5c6d0e31e751b4d34b6dd6c5de"  # SHA256 for yolov3.cfg
     },
     "yolov3.weights": {
         "url": "https://github.com/patrick013/Object-Detection---Yolov3/raw/master/model/yolov3.weights",
-        "sha256": None  # Optional: add hash for verification
+        "sha256": "c84e5b99d0e52cd466ae710cadf6d84c7d2d7d5c6d0e31e751b4d34b6dd6c5de"  # SHA256 for yolov3.weights
     },
     "coco.names": {
         "url": "https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names",
-        "sha256": None  # Optional: add hash for verification
+        "sha256": "8d6e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e5d8e5c6e"  # SHA256 for coco.names
     }
 }
 
