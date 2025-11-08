@@ -13,7 +13,6 @@ URIs for YOLO files:
 - Names: https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names
 """
 
-import os
 import sys
 import urllib.request
 import urllib.error
