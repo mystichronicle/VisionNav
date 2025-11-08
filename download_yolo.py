@@ -70,6 +70,9 @@ def download_file(url, destination, expected_hash=None):
             else:
                 sys.stdout.write(f"\rDownloaded: {downloaded} bytes")
                 sys.stdout.flush()
+            else:
+                sys.stdout.write(f"\rDownloaded: {downloaded} bytes")
+                sys.stdout.flush()
         
         # Create an SSL context with certificate verification
         import ssl
