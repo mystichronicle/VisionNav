@@ -67,6 +67,9 @@ def download_file(url, destination, expected_hash=None):
                 percent = min(100, downloaded * 100 / total_size)
                 sys.stdout.write(f"\rProgress: {percent:.1f}% ({downloaded}/{total_size} bytes)")
                 sys.stdout.flush()
+            else:
+                sys.stdout.write(f"\rDownloaded: {downloaded} bytes")
+                sys.stdout.flush()
         
         # Create an SSL context with certificate verification
         import ssl
@@ -74,9 +77,22 @@ def download_file(url, destination, expected_hash=None):
         
         # Download with timeout
         opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=context))
-        urllib.request.install_opener(opener)
         
-        urllib.request.urlretrieve(url, destination, reporthook=report_progress)
+        # Manually download the file using the opener to avoid global side effects
+        req = urllib.request.Request(url)
+        with opener.open(req, timeout=30) as response, open(destination, 'wb') as out_file:
+            total_size = int(response.headers.get('Content-Length', 0))
+            block_size = 8192
+            downloaded = 0
+            block_num = 0
+            while True:
+                buffer = response.read(block_size)
+                if not buffer:
+                    break
+                out_file.write(buffer)
+                downloaded += len(buffer)
+                block_num += 1
+                report_progress(block_num, block_size, total_size)
         print()  # New line after progress
         
         # Verify hash if provided

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Installing Python dependencies..."
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 echo ""
 echo "Downloading YOLO configuration and weights..."
